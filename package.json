@@ -11,9 +11,9 @@
 		"Other"
 	],
 	"activationEvents": [
-		"onCustomEditor:catCustoms.catScratch",
-		"onCustomEditor:catCustoms.pawDraw",
-		"onCommand:catCustoms.pawDraw.new"
+		"onCustomEditor:markdownEditor.catScratch",
+		"onCustomEditor:markdownEditor.pawDraw",
+		"onCommand:markdownEditor.pawDraw.new"
 	],
 	"repository": {
 		"type": "git",
@@ -23,7 +23,7 @@
 	"contributes": {
 		"customEditors": [
 			{
-				"viewType": "catCustoms.catScratch",
+				"viewType": "markdownEditor.catScratch",
 				"displayName": "Cat Scratch",
 				"selector": [
 					{
@@ -32,7 +32,7 @@
 				]
 			},
 			{
-				"viewType": "catCustoms.pawDraw",
+				"viewType": "markdownEditor.pawDraw",
 				"displayName": "Paw Draw",
 				"selector": [
 					{
@@ -43,7 +43,7 @@
 		],
 		"commands": [
 			{
-				"command": "catCustoms.pawDraw.new",
+				"command": "markdownEditor.pawDraw.new",
 				"title": "Create new Paw Draw Document",
 				"category": "Paw Draw"
 			}

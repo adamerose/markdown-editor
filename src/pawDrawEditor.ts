@@ -207,7 +207,7 @@ export class PawDrawEditorProvider implements vscode.CustomEditorProvider<PawDra
 	private static newPawDrawFileId = 1;
 
 	public static register(context: vscode.ExtensionContext): vscode.Disposable {
-		vscode.commands.registerCommand('catCustoms.pawDraw.new', () => {
+		vscode.commands.registerCommand('markdownEditor.pawDraw.new', () => {
 			const workspaceFolders = vscode.workspace.workspaceFolders;
 			if (!workspaceFolders) {
 				vscode.window.showErrorMessage(
@@ -243,7 +243,7 @@ export class PawDrawEditorProvider implements vscode.CustomEditorProvider<PawDra
 		);
 	}
 
-	private static readonly viewType = 'catCustoms.pawDraw';
+	private static readonly viewType = 'markdownEditor.pawDraw';
 
 	/**
 	 * Tracks all known webviews
