@@ -2,10 +2,10 @@ import * as vscode from 'vscode';
 import { getNonce } from './util';
 
 /**
- * Provider for cat scratch editors.
+ * Provider for markdown editors.
  *
- * Cat scratch editors are used for `.cscratch` files, which are just json files.
- * To get started, run this extension and open an empty `.cscratch` file in VS Code.
+ * Markdown editors are used for `.md` files.
+ * To get started, run this extension and open a `.md` file in VS Code.
  *
  * This provider demonstrates:
  *
@@ -13,30 +13,17 @@ import { getNonce } from './util';
  * - Loading scripts and styles in a custom editor.
  * - Synchronizing changes between a text document and a custom editor.
  */
-export class CatScratchEditorProvider implements vscode.CustomTextEditorProvider {
+export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
 	public static register(context: vscode.ExtensionContext): vscode.Disposable {
-		const provider = new CatScratchEditorProvider(context);
+		const provider = new MarkdownEditorProvider(context);
 		const providerRegistration = vscode.window.registerCustomEditorProvider(
-			CatScratchEditorProvider.viewType,
+			MarkdownEditorProvider.viewType,
 			provider
 		);
 		return providerRegistration;
 	}
 
-	private static readonly viewType = 'markdownEditor.catScratch';
-
-	private static readonly scratchCharacters = [
-		'😸',
-		'😹',
-		'😺',
-		'😻',
-		'😼',
-		'😽',
-		'😾',
-		'🙀',
-		'😿',
-		'🐱',
-	];
+	private static readonly viewType = 'markdownEditor.markdown';
 
 	constructor(private readonly context: vscode.ExtensionContext) {}
 
@@ -85,12 +72,8 @@ export class CatScratchEditorProvider implements vscode.CustomTextEditorProvider
 		// Receive message from the webview.
 		webviewPanel.webview.onDidReceiveMessage((e) => {
 			switch (e.type) {
-				case 'add':
-					this.addNewScratch(document);
-					return;
-
-				case 'delete':
-					this.deleteScratch(document, e.id);
+				case 'change':
+					this.changeDocument(document, e.text);
 					return;
 			}
 		});
@@ -104,7 +87,7 @@ export class CatScratchEditorProvider implements vscode.CustomTextEditorProvider
 	private getHtmlForWebview(webview: vscode.Webview): string {
 		// Local path to script and css for the webview
 		const scriptUri = webview.asWebviewUri(
-			vscode.Uri.joinPath(this.context.extensionUri, 'media', 'catScratch.js')
+			vscode.Uri.joinPath(this.context.extensionUri, 'media', 'markdown.js')
 		);
 
 		const styleResetUri = webview.asWebviewUri(
@@ -116,7 +99,7 @@ export class CatScratchEditorProvider implements vscode.CustomTextEditorProvider
 		);
 
 		const styleMainUri = webview.asWebviewUri(
-			vscode.Uri.joinPath(this.context.extensionUri, 'media', 'catScratch.css')
+			vscode.Uri.joinPath(this.context.extensionUri, 'media', 'markdown.css')
 		);
 
 		// Use a nonce to whitelist which scripts can be run
@@ -140,13 +123,12 @@ export class CatScratchEditorProvider implements vscode.CustomTextEditorProvider
 				<link href="${styleVSCodeUri}" rel="stylesheet" />
 				<link href="${styleMainUri}" rel="stylesheet" />
 
-				<title>Cat Scratch</title>
+				<title>Markdown Editor</title>
 			</head>
 			<body>
-				<div class="notes">
-					<div class="add-button">
-						<button>Scratch!</button>
-					</div>
+				<div class="main">
+          <div class="content" contenteditable="true">
+          </div>
 				</div>
 				
 				<script nonce="${nonce}" src="${scriptUri}"></script>
@@ -155,69 +137,30 @@ export class CatScratchEditorProvider implements vscode.CustomTextEditorProvider
 	}
 
 	/**
-	 * Add a new scratch to the current document.
+	 * Update current document text to changed text.
 	 */
-	private addNewScratch(document: vscode.TextDocument) {
-		const json = this.getDocumentAsJson(document);
-		const character =
-			CatScratchEditorProvider.scratchCharacters[
-				Math.floor(Math.random() * CatScratchEditorProvider.scratchCharacters.length)
-			];
-		json.scratches = [
-			...(Array.isArray(json.scratches) ? json.scratches : []),
-			{
-				id: getNonce(),
-				text: character,
-				created: Date.now(),
-			},
-		];
-
-		return this.updateTextDocument(document, json);
+	private changeDocument(document: vscode.TextDocument, newText: string) {
+		const oldText = this.getDocumentAsText(document);
+		return this.updateTextDocument(document, newText);
 	}
 
 	/**
-	 * Delete an existing scratch from a document.
+	 * Try to get a current document as text.
 	 */
-	private deleteScratch(document: vscode.TextDocument, id: string) {
-		const json = this.getDocumentAsJson(document);
-		if (!Array.isArray(json.scratches)) {
-			return;
-		}
-
-		json.scratches = json.scratches.filter((note: any) => note.id !== id);
-
-		return this.updateTextDocument(document, json);
-	}
-
-	/**
-	 * Try to get a current document as json text.
-	 */
-	private getDocumentAsJson(document: vscode.TextDocument): any {
+	private getDocumentAsText(document: vscode.TextDocument): any {
 		const text = document.getText();
-		if (text.trim().length === 0) {
-			return {};
-		}
-
-		try {
-			return JSON.parse(text);
-		} catch {
-			throw new Error('Could not get document as json. Content is not valid json');
-		}
+		return text;
 	}
 
 	/**
-	 * Write out the json to a given document.
+	 * Write out the text to a given document.
 	 */
-	private updateTextDocument(document: vscode.TextDocument, json: any) {
+	private updateTextDocument(document: vscode.TextDocument, text: any) {
 		const edit = new vscode.WorkspaceEdit();
 
 		// Just replace the entire document every time for this example extension.
 		// A more complete extension should compute minimal edits instead.
-		edit.replace(
-			document.uri,
-			new vscode.Range(0, 0, document.lineCount, 0),
-			JSON.stringify(json, null, 2)
-		);
+		edit.replace(document.uri, new vscode.Range(0, 0, document.lineCount, 0), text);
 
 		return vscode.workspace.applyEdit(edit);
 	}

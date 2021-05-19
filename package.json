@@ -13,6 +13,7 @@
 	"activationEvents": [
 		"onCustomEditor:markdownEditor.catScratch",
 		"onCustomEditor:markdownEditor.pawDraw",
+		"onCustomEditor:markdownEditor.markdown",
 		"onCommand:markdownEditor.pawDraw.new"
 	],
 	"repository": {
@@ -37,6 +38,15 @@
 				"selector": [
 					{
 						"filenamePattern": "*.pawdraw"
+					}
+				]
+			},
+			{
+				"viewType": "markdownEditor.markdown",
+				"displayName": "Markdown Editor",
+				"selector": [
+					{
+						"filenamePattern": "*.md"
 					}
 				]
 			}
