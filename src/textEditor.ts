@@ -2,9 +2,9 @@ import * as vscode from 'vscode';
 import { getNonce } from './util';
 
 /**
- * Provider for markdown editors.
+ * Provider for text editors.
  *
- * Markdown editors are used for `.md` files.
+ * Text editors are used for `.txt` files.
  * To get started, run this extension and open a `.md` file in VS Code.
  *
  * This provider demonstrates:
@@ -13,17 +13,17 @@ import { getNonce } from './util';
  * - Loading scripts and styles in a custom editor.
  * - Synchronizing changes between a text document and a custom editor.
  */
-export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
+export class TextEditorProvider implements vscode.CustomTextEditorProvider {
 	public static register(context: vscode.ExtensionContext): vscode.Disposable {
-		const provider = new MarkdownEditorProvider(context);
+		const provider = new TextEditorProvider(context);
 		const providerRegistration = vscode.window.registerCustomEditorProvider(
-			MarkdownEditorProvider.viewType,
+			TextEditorProvider.viewType,
 			provider
 		);
 		return providerRegistration;
 	}
 
-	private static readonly viewType = 'markdownEditorExtension.markdown';
+	private static readonly viewType = 'markdownEditorExtension.text';
 
 	constructor(private readonly context: vscode.ExtensionContext) {}
 
@@ -45,7 +45,7 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
 
 		function updateWebview() {
 			const text = document.getText();
-			console.log('postMessage (documentChanged)', text);
+			console.log('VS Code sent message: documentChanged', text);
 			webviewPanel.webview.postMessage({
 				type: 'documentChanged',
 				text: text,
@@ -60,25 +60,31 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
 		// Remember that a single text document can also be shared between multiple custom
 		// editors (this happens for example when you split a custom editor)
 
-		const changeDocumentSubscription = vscode.workspace.onDidChangeTextDocument((e) => {
+		const saveDocumentSubscription = vscode.workspace.onDidSaveTextDocument((e) => {
+			console.log('onDidSaveTextDocument');
 			updateWebview();
+		});
+
+		const changeDocumentSubscription = vscode.workspace.onDidChangeTextDocument((e) => {
+			console.log('onDidChangeTextDocument: ', e.document.getText());
 		});
 
 		// Make sure we get rid of the listener when our editor is closed.
 		webviewPanel.onDidDispose(() => {
 			console.log('Disposed');
 			changeDocumentSubscription.dispose();
+			saveDocumentSubscription.dispose();
 		});
 
 		// Receive message from the webview.
 		webviewPanel.webview.onDidReceiveMessage((e) => {
 			switch (e.type) {
 				case 'webviewChanged':
-					console.log('onDidReceiveMessage (webviewChanged)', e.text);
+					console.log('VS Code recieved message: webviewChanged', e.text);
 					this.updateTextDocument(document, e.text);
 					return;
 				case 'initialized':
-					console.log('onDidReceiveMessage (initialized)');
+					console.log('VS Code recieved message: initialized');
 					updateWebview();
 					return;
 			}
@@ -91,18 +97,7 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
 	private getHtmlForWebview(webview: vscode.Webview): string {
 		// Local path to script and css for the webview
 		const scriptUri = webview.asWebviewUri(
-			vscode.Uri.joinPath(this.context.extensionUri, 'media', 'markdownEditorInitScript.js')
-		);
-
-		const cssUri = webview.asWebviewUri(
-			vscode.Uri.joinPath(this.context.extensionUri, 'media', 'markdownEditorStyles.css')
-		);
-
-		const ckeditorUri = webview.asWebviewUri(
-			vscode.Uri.joinPath(
-				this.context.extensionUri,
-				...'node_modules/@jdinabox/ckeditor5-build-markdown/build/ckeditor.js'.split('/')
-			)
+			vscode.Uri.joinPath(this.context.extensionUri, 'media', 'textEditorInitScript.js')
 		);
 
 		return /* html */ `
@@ -111,27 +106,13 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
 			<head>
 				<meta charset="UTF-8">
 				<meta name="viewport" content="width=device-width, initial-scale=1.0">
-				<title>Markdown Editor</title>
+				<title>Text Editor</title>
 			</head>
 			<body>
-				<div id="editor">
+				<div id="editor" contenteditable="true">
 					<p>Here goes the initial content of the editor.</p>
 				</div>
-				
-				<script src="${ckeditorUri}"></script>
-				<script>
-					MarkdownEditor
-					.create( document.querySelector( '#editor' ) )
-					.then( editor => {
-						window.editor = editor
-						console.log( "CKEditor instance:", editor );
-					} )
-					.catch( error => {
-						console.error("CKEditor Initialization Error:",  error );
-					} );
-				</script>
-				<!-- CKEditor CSS override has to go after import script -->
-				<link href="${cssUri}" rel="stylesheet" />
+
 				<script src="${scriptUri}"></script>
 			</body>
 			</html>`;
@@ -147,6 +128,14 @@ export class MarkdownEditorProvider implements vscode.CustomTextEditorProvider {
 		// A more complete extension should compute minimal edits instead.
 		edit.replace(document.uri, new vscode.Range(0, 0, document.lineCount, 0), text);
 
-		return vscode.workspace.applyEdit(edit);
+		console.log('VS Code ran applyEdit', text);
+		return vscode.workspace.applyEdit(edit).then(
+			() => {
+				console.log('VS Code finished applyEdit', text);
+			},
+			() => {
+				console.log('VS Code failed applyEdit', text);
+			}
+		);
 	}
 }

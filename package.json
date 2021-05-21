@@ -1,7 +1,7 @@
 {
-	"name": "cat-customs",
-	"displayName": "Cat Customs",
-	"description": "Custom Editor API Samples",
+	"name": "markdown-editor",
+	"displayName": "Markdown Editor",
+	"description": "A WYSIWYG Editor for markdown files",
 	"version": "0.0.1",
 	"publisher": "vscode-samples",
 	"engines": {
@@ -11,10 +11,8 @@
 		"Other"
 	],
 	"activationEvents": [
-		"onCustomEditor:markdownEditor.catScratch",
-		"onCustomEditor:markdownEditor.pawDraw",
-		"onCustomEditor:markdownEditor.markdown",
-		"onCommand:markdownEditor.pawDraw.new"
+		"onCustomEditor:markdownEditorExtension.markdown",
+		"onCustomEditor:markdownEditorExtension.text"
 	],
 	"repository": {
 		"type": "git",
@@ -24,39 +22,26 @@
 	"contributes": {
 		"customEditors": [
 			{
-				"viewType": "markdownEditor.catScratch",
-				"displayName": "Cat Scratch",
-				"selector": [
-					{
-						"filenamePattern": "*.cscratch"
-					}
-				]
-			},
-			{
-				"viewType": "markdownEditor.pawDraw",
-				"displayName": "Paw Draw",
-				"selector": [
-					{
-						"filenamePattern": "*.pawdraw"
-					}
-				]
-			},
-			{
-				"viewType": "markdownEditor.markdown",
+				"viewType": "markdownEditorExtension.markdown",
 				"displayName": "Markdown Editor",
 				"selector": [
 					{
 						"filenamePattern": "*.md"
 					}
 				]
+			},
+			{
+				"viewType": "markdownEditorExtension.text",
+				"displayName": "Text Editor",
+				"selector": [
+					{
+						"filenamePattern": "*.txt"
+					}
+				]
 			}
 		],
 		"commands": [
-			{
-				"command": "markdownEditor.pawDraw.new",
-				"title": "Create new Paw Draw Document",
-				"category": "Paw Draw"
-			}
+
 		]
 	},
 	"scripts": {
@@ -72,5 +57,8 @@
 		"@typescript-eslint/parser": "^4.16.0",
 		"eslint": "^7.21.0",
 		"typescript": "^4.2.2"
+	},
+	"dependencies": {
+		"@ckeditor/ckeditor5-build-classic": "^27.1.0"
 	}
 }
